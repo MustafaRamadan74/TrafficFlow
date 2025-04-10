@@ -2,3 +2,27 @@
     width: 100%;
     height: 100vh;
 } */
+
+.name {
+    -webkit-box-orient: vertical;
+    color: #262626;
+    display: -webkit-box;
+    font-family: "Gotham", Helvetica, Arial, sans-serif;
+    font-size: 13px;
+    font-weight: bold;
+    -webkit-line-clamp: 2;
+    margin-top: 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+.category {
+    color: #3f9cd9;
+    font-family: "Gotham", Helvetica, Arial, sans-serif;
+    font-size: 10px;
+    font-weight: bold;
+    margin-top: -10px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-transform: uppercase;
+    white-space: nowrap;
+}
