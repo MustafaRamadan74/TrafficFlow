@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html class='use-all-space'>
+<head>
+    <meta http-equiv='X-UA-Compatible' content='IE=Edge' />
+    <meta charset='UTF-8'>
+    <title>Maps SDK for Web - Route sections</title>
+    <meta name='viewport'
+          content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <link rel='stylesheet' type='text/css' href='/cdn.web-sdk-maps/maps.css'>
+    <link rel='stylesheet' type='text/css' href='../assets/ui-library/index.css'/>
+</head>
+<body>
+    <style>
+        .tt-overlay-panel {
+            width: 320px;
+        }
+        .legend-label {
+            padding-left: 20px;
+            padding-top: 8px;
+        }
+        .color-label {
+            border-radius: 50%;
+            float: left;
+            height: 10px;
+            margin-top: 13px;
+            padding-right: 8px;
+            width: 10px;
+        }
+    </style>
+    <div id='map' class='map'>
+        <div class='tt-overlay-panel -left-top -medium js-foldable'>
+            <div class='tt-form-label'>
+                Scenario
+                <select class='js-scenario-select tt-select'></select>
+            </div>
+            <div class='js-legend tt-spacing-top-12'></div>
+        </div>
+    </div>
+    <script src='/cdn.web-sdk-maps/maps-web.min.js'></script>
+    <script src='/cdn.web-sdk-services/services-web.min.js'></script>
+    <script data-showable type='text/javascript' src='../assets/js/mobile-or-tablet.js'></script>
+    <script type='text/javascript' src='../assets/js/tail.select.min.js'></script>
+    <script data-showable type='text/javascript' src='../assets/js/tail-selector.js'></script>
+    <script data-showable type='text/javascript' src='../assets/js/foldable.js'></script>
+    <script data-showable type='text/javascript' src='../assets/js/info-hint.js'></script>
+    <script>
+        var map = tt.map({
+            key: '${api.key.maps}',
+            container: 'map',
+            zoom: 6,
+            center: [10.90626, 50.71166],
+            dragPan: !isMobileOrTablet()
+        });
+        map.addControl(new tt.FullscreenControl());
+        map.addControl(new tt.NavigationControl());
+
+        var state = {
+            selectedScenario: 'crossCountry',
+            layers: [],
+            types: {
+                crossCountry: 'Cross country',
+                motorwayAndVignettes: 'Motorway and vignettes',
+                crossShore: 'Cross shore',
+                park: 'Park',
+                traffic: 'Traffic'
+            }
+        };
+
+        var scenarios = {
+            motorwayAndVignettes: {
+                locations: '14.161376953125,50.078294547389454:' +
+                    '19.4677734375,51.82219818336938:18.544921875000004,54.278054859672835',
+                types: ['motorway', 'tollRoad', 'tollVignette']
+            },
+            crossShore: {
+                locations: '1.753280,50.224826:-0.083755,51.257478:-1.657582,49.611379',
+                types: ['ferry', 'tunnel']
+            },
+            park: {
+                locations: '-0.04856944084167481,51.49388910878061:' +
+                    '-0.05478143692016602,51.49499793428775:-0.05581140518188477,51.49525175801964',
+                types: ['pedestrian', 'travelMode']
+            },
+            crossCountry: {
+                locations: '2.354,48.857:13.4159,52.5222:19.4586,51.75905',
+                types: ['country']
+            },
+            traffic: {
+                locations: '6.796465,51.236562:7.464138,51.364271:7.817076,51.678145',
+                types: ['traffic']
+            }
+        };
+
+        var sectionsData = {
+            JAM: {
+                color: '#ff0000',
+                name: 'Jam'
+            },
+            ROAD_WORK: {
+                color: '#F66606',
+                name: 'Road Works'
+            },
+            ROAD_CLOSURE: {
+                color: '#f06368',
+                name: 'Road Closed'
+            },
+            OTHER: {
+                color: '#666666',
+                name: 'Other'
+            },
+            FRA: {
+                color: '#004B7F',
+                name: 'France'
+            },
+            DEU: {
+                color: '#008D8D',
+                name: 'Germany'
+            },
+            POL: {
+                color: '#F9B023',
+                name: 'Poland'
+            },
+            BEL: {
+                color: '#EC619F',
+                name: 'Belgium'
+            },
+            NLD: {
+                color: '#E94743',
+                name: 'Netherlands'
+            },
+            CAR_TRAIN: {
+                color: '#5fb935',
+                name: 'Car/Train'
+            },
+            COUNTRY: {
+                color: '#f06368',
+                name: 'Country'
+            },
+            FERRY: {
+                color: '#AB6AD2',
+                name: 'Ferry'
+            },
+            MOTORWAY: {
+                color: '#004B7F',
+                name: 'Motorway'
+            },
+            PEDESTRIAN: {
+                color: '#004B7F',
+                name: 'Pedestrian'
+            },
+            TOLL_ROAD: {
+                color: '#F9B023',
+                name: 'Toll road',
+                index: 1
+            },
+            TOLL_VIGNETTE: {
+                color: '#E94743',
+                name: 'Toll Vignette',
+                index: 1
+            },
+            TRAVEL_MODE: {
+                color: '#EC619F',
+                name: 'Car'
+            },
+            TUNNEL: {
+                color: '#008D8D',
+                name: 'Tunnel'
+            },
+            TRAFFIC: {
+                color: '#70ce6d',
+                name: 'Traffic'
+            }
+        };
+
+        var scenarioSelector = new TailSelector(state.types, '.js-scenario-select', state.selectedScenario).getElement();
+        var legendContainer = document.querySelector('.js-legend');
+        var errorHint = new InfoHint('error', 'bottom-center', 5000).addTo(document.getElementById('map'));
+        var loadingHint = new InfoHint('info', 'bottom-center').addTo(document.getElementById('map'));
+        new Foldable('.js-foldable', 'top-right');
+
+        scenarioSelector.on('change', function(evt) {
+            state.selectedScenario = evt.key;
+            serviceCall();
+        });
+
+        serviceCall();
+
+        function serviceCall() {
+            scenarioSelector.block();
+            errorHint.hide();
+            loadingHint.setMessage('Loading...');
+            clearLegend();
+            clearLayers();
+            tt.services.calculateRoute({
+                key: '${api.key.routing}',
+                locations: scenarios[state.selectedScenario].locations,
+                sectionType: scenarios[state.selectedScenario].types,
+                traffic: state.selectedScenario === 'traffic'
+            })
+                .then(function(res) {
+                    // First we draw the whole route and fit map view
+                    var geojson = res.toGeoJson();
+                    drawLayer(geojson, 'route', '#1692E4', 4);
+                    fitBounds(geojson);
+
+                    // Then we extract sections of the route, response may contain multiple routes, but we are only interested in the first one
+                    var routeSections = res.toRouteSectionsCollection()[0];
+                    var legendData = {};
+
+                    // For "motorwayAndVignettes" we need to make sure motorways sections are drawn before toll roads to not cover them
+                    routeSections.features.sort(function(first) {
+                        return first.properties.sectionType === 'MOTORWAY' ? -1 : 0;
+                    });
+
+                    // And draw a line for each segment
+                    routeSections.features.forEach(function(lineString, index) {
+                        // In "park" scenario we service returns 3 sections, the one with travelMode=other
+                        // is the same as the one with sectionType=pedestrian, so we can ignore it
+                        if (lineString.properties.travelMode && lineString.properties.travelMode === 'other') {
+                            return;
+                        }
+
+                        var sectionProps = getSectionData(lineString.properties);
+
+                        // Actual drawing
+                        drawLayer(lineString, 'route' + index, sectionProps.color, 8);
+                        legendData[sectionProps.name] = sectionProps.color;
+                    });
+
+                    createLegend(legendData);
+                })
+                .catch(errorHint.setErrorMessage)
+                .finally(function() {
+                    loadingHint.hide();
+                    scenarioSelector.unblock();
+                });
+        }
+
+        function getSectionData(properties) {
+            switch (state.selectedScenario) {
+            case 'crossCountry':
+                if (properties.countryCode) {
+                    return sectionsData[properties.countryCode];
+                }
+                break;
+            case 'motorwayAndVignettes':
+            case 'crossShore':
+            case 'park':
+                if (properties.sectionType) {
+                    return sectionsData[properties.sectionType];
+                }
+                break;
+            case 'traffic':
+                if (properties.simpleCategory) {
+                    return sectionsData[properties.simpleCategory];
+                }
+                break;
+            }
+        }
+
+        function fitBounds(geojson) {
+            var coordinates = geojson.features[0].geometry.coordinates;
+
+            var bounds = [].concat.apply([], coordinates)
+                .reduce(function(bounds, coord) {
+                    return bounds.extend(tt.LngLat.convert(coord));
+                }, new tt.LngLatBounds());
+
+            var cameraOptions = map.cameraForBounds(bounds, { padding: 50 });
+
+            map.jumpTo(cameraOptions);
+        }
+
+        function clearLayers() {
+            state.layers.forEach(function(layerId) {
+                map.removeLayer(layerId);
+                map.removeSource(layerId);
+            });
+            state.layers = [];
+        }
+
+        function drawLayer(geojson, id, color, width) {
+            state.layers.push(id);
+            map.addLayer({
+                'id': id,
+                'type': 'line',
+                'source': {
+                    'type': 'geojson',
+                    'data': geojson
+                },
+                'paint': {
+                    'line-color': color,
+                    'line-width': width
+                }
+            });
+        }
+
+        function createLegend(data) {
+            var fragment = document.createDocumentFragment();
+
+            for (var name in data) {
+                var color = data[name];
+                var label = document.createElement('div');
+                label.innerText = name;
+                label.className = 'legend-label';
+                var colorLabel = document.createElement('div');
+                colorLabel.className = 'color-label';
+                colorLabel.setAttribute('style', 'background-color:' + color);
+
+                fragment.appendChild(colorLabel);
+                fragment.appendChild(label);
+            }
+
+            legendContainer.appendChild(fragment);
+        }
+
+        function clearLegend() {
+            legendContainer.innerHTML = '';
+        }
+    </script>
+</body>
+</html>

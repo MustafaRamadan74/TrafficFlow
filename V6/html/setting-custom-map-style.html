@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html class='use-all-space'>
+<head>
+    <meta http-equiv='X-UA-Compatible' content='IE=Edge'/>
+    <meta charset='UTF-8'>
+    <title>Maps SDK for Web - Setting custom map style</title>
+    <meta name='viewport'
+          content='width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no'/>
+    <link rel='stylesheet' type='text/css' href='/cdn.web-sdk-maps/maps.css'>
+    <link rel='stylesheet' type='text/css' href='../assets/ui-library/index.css'/>
+</head>
+<body>
+    <div id='map' class='map'>
+        <div class='tt-overlay-panel -left-top -medium js-foldable'>
+            This example shows how to use a custom map style created with <a class="tt-link" href="https://mapmaker.tomtom.com" target='_blank' rel='noopener'>TomTom Map Maker</a>.
+        
+            <form class="tt-spacing-top-24" onsubmit="return false;">
+                <label class='tt-form-label'>
+                    Custom style URL
+                    <input
+                        class='tt-input js-url-input'
+                        placeholder="URL shared from Map Maker" />
+                </label>
+            </form>
+        </div>
+    </div>
+    <script src='/cdn.web-sdk-maps/maps-web.min.js'></script>
+    <script data-showable type="text/javascript" src='../assets/js/info-hint.js'></script>
+    <script data-showable type='text/javascript' src='../assets/js/mobile-or-tablet.js'></script>
+    <script data-showable type="text/javascript" src='../assets/js/foldable.js'></script>
+    <script>
+        var map = tt.map({
+            key: '${api.key.maps}',
+            // Custom style created with Map Maker. To learn more, see: https://developer.tomtom.com/map-maker/
+            style: 'https://api.tomtom.com/style/2/custom/style/dG9tdG9tQEBATFNPdGJFR0hQcHRWNjJhSDszMThlMGI4MS1mMjkyLTQxYmUtOGY4ZC0xZTk4OTU2ZTcxZGE=.json',
+            container: 'map',
+            center: [-96, 41],
+            zoom: 4,
+            dragPan: !isMobileOrTablet()
+        });
+        map.addControl(new tt.FullscreenControl());
+
+        var customStyleInput = document.querySelector('.js-url-input');
+
+        customStyleInput.addEventListener('change', function(event) {
+            try {
+                var url = new URL(event.target.value);
+                map.setStyle(url.href);
+            } catch (e) {
+                // no-op
+            }
+        });
+
+        new Foldable('.js-foldable', 'top-right');
+    </script>
+</body>
+</html>
